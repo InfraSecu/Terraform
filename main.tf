@@ -34,5 +34,5 @@ resource "azurerm_storage_account" "example" {
   account_replication_type = "LRS"
   # Problème de sécurité: pas de chiffrement activé
   # Problème de sécurité: accès public autorisé
-  allow_blob_public_access = true
+  
 }
