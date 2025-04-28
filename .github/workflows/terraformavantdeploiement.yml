@@ -1,0 +1,21 @@
+name: Terraform Security Scan (Before)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  snyk-scan:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Snyk IaC scan
+        uses: snyk/actions/iac@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=low
+      - name: Upload scan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: snyk-iac-scan-before
+          path: snyk.json
