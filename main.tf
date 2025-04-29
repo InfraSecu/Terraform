@@ -5,17 +5,10 @@ provider "azurerm" {
 
 resource "azurerm_resource_group" "example" {
   name     = "example-resources"
-  location = "East US"
+  location = "West Europe"
   tags = {
     environment = "demo"
   }
-}
-
-# Ajout d'un plan de protection DDoS
-resource "azurerm_network_ddos_protection_plan" "example" {
-  name                = "example-protection-plan"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
 }
 
 resource "azurerm_virtual_network" "example" {
@@ -23,12 +16,6 @@ resource "azurerm_virtual_network" "example" {
   address_space       = ["10.0.0.0/16"]
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
-  
-  # Configuration de la protection DDoS
-  ddos_protection_plan {
-    id     = azurerm_network_ddos_protection_plan.example.id
-    enable = true
-  }
 }
 
 resource "azurerm_subnet" "example" {
@@ -37,5 +24,3 @@ resource "azurerm_subnet" "example" {
   virtual_network_name = azurerm_virtual_network.example.name
   address_prefixes     = ["10.0.2.0/24"]
 }
-
-
