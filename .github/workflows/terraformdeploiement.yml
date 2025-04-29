@@ -62,7 +62,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high
+          args: --severity-threshold=high --org=23857a77-bf03-454b-8f2e-113ef9a51e58
       - name: Save scan results
         run: echo "Snyk scan completed"
         
