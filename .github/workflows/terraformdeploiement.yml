@@ -42,67 +42,97 @@
 #       with:
 #         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-name: 'Terraform'
+name: Terraform Deploy with Snyk Security Gate
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-
-permissions:
-  contents: read
+    branches: [ main ]
 
 jobs:
+  # Job 1: Analyse de sécurité avec Snyk sur runner GitHub
   security-scan:
-    runs-on: ubuntu-latest    # Modifié ici
+    runs-on: ubuntu-latest  # Runner hébergé par GitHub
+    outputs:
+      scan-result: ${{ steps.check-results.outputs.result }}
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Run Snyk IaC scan
+        id: snyk-scan
         uses: snyk/actions/iac@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high 
-      - name: Save scan results
-        run: echo "Snyk scan completed"
-        
-  terraform:
-    name: 'Terraform'
-    runs-on: self-hosted # Choisi un seul type de runner (ici self-hosted comme demandé)
-    environment: production
-    env:
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          args: --severity-threshold=low
+        continue-on-error: true
 
-    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
-    defaults:
-      run:
-        shell: bash
+      - name: Check Snyk scan results
+        id: check-results
+        run: |
+          if [ "${{ steps.snyk-scan.outcome }}" == "failure" ]; then
+            echo "⛔ Vulnérabilités détectées par Snyk - même de niveau 'low'"
+            echo "❌ Déploiement Terraform sera bloqué pour des raisons de sécurité"
+            echo "result=failure" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Aucune vulnérabilité détectée. Déploiement Terraform autorisé."
+            echo "result=success" >> $GITHUB_OUTPUT
+          fi
 
+      - name: Generate Snyk Report
+        if: steps.snyk-scan.outcome == 'failure'
+        run: |
+          echo "### Rapport de vulnérabilités Snyk 🔍" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Des vulnérabilités ont été détectées dans votre infrastructure. Le déploiement sera bloqué." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Consultez les logs de l'étape 'Run Snyk IaC scan' pour plus de détails." >> $GITHUB_STEP_SUMMARY
+
+  # Job 2: Déploiement Terraform sur runner auto-hébergé
+  terraform-deploy:
+    needs: security-scan  # Attend que le job security-scan soit terminé
+    if: needs.security-scan.outputs.scan-result == 'success'  # Exécute uniquement si le scan est réussi
+    runs-on: self-hosted  # Utilise votre runner auto-hébergé
     steps:
-    # Checkout the repository to the GitHub Actions runner
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-      with:
-        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      # Optionnel si Terraform est déjà installé sur votre runner
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0  # Spécifiez la version souhaitée
 
-    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
-    - name: Terraform Init
-      run: terraform init
+      - name: Terraform Init
+        run: terraform init
 
-    # Generates an execution plan for Terraform
-    - name: Terraform Plan
-      run: terraform plan -input=false
+      - name: Terraform Plan
+        id: tf-plan
+        run: terraform plan -out=tfplan
 
-    # On push to "main", build or change infrastructure according to Terraform configuration files
-    # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
-    - name: Terraform Apply
-      #if: github.ref == 'refs/heads/"main"' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false
+      - name: Terraform Apply
+        id: tf-apply  
+        run: terraform apply -auto-approve tfplan
+
+  # Job 3: Notification en cas d'échec de sécurité
+  notification-failure:
+    needs: security-scan
+    if: needs.security-scan.outputs.scan-result == 'failure'
+    runs-on: ubuntu-latest  # Peut être n'importe quel runner
+    steps:
+      - name: Notification d'échec
+        run: |
+          echo "Le déploiement a été bloqué car Snyk a détecté des vulnérabilités."
+          echo "Veuillez consulter les résultats de l'analyse pour plus de détails."
+          
+      # Vous pourriez ajouter ici des actions pour envoyer des notifications (Slack, email, etc.)
+      # - name: Send Slack notification
+      #   uses: slackapi/slack-github-action@v1.23.0
+      #   with:
+      #     slack-message: "⛔ Déploiement Terraform bloqué - Vulnérabilités détectées"
+      #     channel-id: "C123456"
+      #   env:
+      #     SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
