@@ -67,6 +67,7 @@ jobs:
       - name: Save scan results
         run: echo "Snyk scan completed"
   terraform:
+    runs-on: self-hosted
     name: 'Terraform'
     env:
       ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
