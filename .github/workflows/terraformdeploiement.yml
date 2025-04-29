@@ -131,17 +131,15 @@ jobs:
         with:
             server_address: smtp.office365.com
             server_port: 587
-            secure: true
+            secure: starttls  # MODIFICATION IMPORTANTE ICI
             username: ${{ secrets.EMAIL_USERNAME }}
             password: ${{ secrets.EMAIL_PASSWORD }}
             subject: "⚠️ [GitHub Actions] Vulnérabilités détectées dans l'Infrastructure"
             html_body: |
               <h1>Alerte de sécurité</h1>
               <p>Des vulnérabilités ont été détectées.</p>
-            to: ${{ github.event.pusher.email }}  # Utilise l'email de l'utilisateur qui a déclenché le workflow
-            from: GitHub Actions <notifications@votreentreprise.com>
-            attachments: ./report/snyk-results.json
-          
+            to: ${{ github.event.pusher.email }}
+            from: GitHub Actions <${{ secrets.EMAIL_USERNAME }}>
       # Vous pourriez ajouter ici des actions pour envoyer des notifications (Slack, email, etc.)
       # - name: Send Slack notification
       #   uses: slackapi/slack-github-action@v1.23.0
