@@ -135,7 +135,9 @@ jobs:
             username: ${{ secrets.EMAIL_USERNAME }}
             password: ${{ secrets.EMAIL_PASSWORD }}
             subject: "⚠️ [GitHub Actions] Vulnérabilités détectées dans l'Infrastructure"
-            html_body: file://./report/email-report.html
+            html_body: |
+              <h1>Alerte de sécurité</h1>
+              <p>Des vulnérabilités ont été détectées.</p>
             to: ${{ github.event.pusher.email }}  # Utilise l'email de l'utilisateur qui a déclenché le workflow
             from: GitHub Actions <notifications@votreentreprise.com>
             attachments: ./report/snyk-results.json
