@@ -57,12 +57,23 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
+      - name: Install Snyk CLI
+        run: |
+          # Installer Node.js et NPM si nécessaire
+          if ! command -v node &> /dev/null; then
+            echo "Node.js not found, installing..."
+            sudo apt update
+            sudo apt install -y nodejs npm
+          fi
+          # Installer Snyk CLI globalement
+          sudo npm install -g snyk
+      - name: Authenticate with Snyk
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
       - name: Run Snyk IaC scan
-        uses: snyk/actions/iac@master
+        run: |
+          snyk iac test --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
       - name: Save scan results
         run: echo "Snyk scan completed"
         
