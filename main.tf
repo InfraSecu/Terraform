@@ -16,9 +16,12 @@ resource "azurerm_storage_account" "example" {
   # Correction 1: Utilisation de la géo-réplication pour éviter la perte de données
   account_replication_type = "GRS" # Géographiquement redondant
   
-  # Correction 2: Forcer HTTPS uniquement
-  enable_https_traffic_only = true
+  # Correction 2: HTTPS uniquement (dans les nouvelles versions, c'est ce paramètre à la place de enable_https_traffic_only)
+  allow_blob_public_access = false
   
   # Correction 3: Forcer la version TLS minimum à 1.2
-  min_tls_version           = "TLS1_2"
+  min_tls_version          = "TLS1_2"
+  
+  # Paramètre de sécurité supplémentaire pour les nouvelles versions
+  https_only               = true
 }
