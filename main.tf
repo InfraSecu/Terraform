@@ -12,7 +12,13 @@ resource "azurerm_storage_account" "example" {
   resource_group_name      = azurerm_resource_group.example.name
   location                 = azurerm_resource_group.example.location
   account_tier             = "Standard"
-  account_replication_type = "LRS"
-  # Correction: HTTPS requis
+  
+  # Correction 1: Utilisation de la géo-réplication pour éviter la perte de données
+  account_replication_type = "GRS" # Géographiquement redondant
+  
+  # Correction 2: Forcer HTTPS uniquement
   enable_https_traffic_only = true
+  
+  # Correction 3: Forcer la version TLS minimum à 1.2
+  min_tls_version           = "TLS1_2"
 }
