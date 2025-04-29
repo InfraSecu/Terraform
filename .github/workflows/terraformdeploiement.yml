@@ -96,6 +96,12 @@ jobs:
     needs: security-scan  # Attend que le job security-scan soit terminé
     if: needs.security-scan.outputs.scan-result == 'success'  # Exécute uniquement si le scan est réussi
     runs-on: self-hosted  # Utilise votre runner auto-hébergé
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
