@@ -1,4 +1,3 @@
-# main.tf
 provider "azurerm" {
   features {}
 }
@@ -6,21 +5,14 @@ provider "azurerm" {
 resource "azurerm_resource_group" "example" {
   name     = "example-resources"
   location = "West Europe"
-  tags = {
-    environment = "demo"
-  }
 }
 
-resource "azurerm_virtual_network" "example" {
-  name                = "example-network"
-  address_space       = ["10.0.0.0/16"]
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
-}
-
-resource "azurerm_subnet" "example" {
-  name                 = "internal"
-  resource_group_name  = azurerm_resource_group.example.name
-  virtual_network_name = azurerm_virtual_network.example.name
-  address_prefixes     = ["10.0.2.0/24"]
+resource "azurerm_storage_account" "example" {
+  name                     = "examplestorageacc"
+  resource_group_name      = azurerm_resource_group.example.name
+  location                 = azurerm_resource_group.example.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  # Vulnérabilité: compte de stockage sans chiffrement HTTPS
+  enable_https_traffic_only = false
 }
