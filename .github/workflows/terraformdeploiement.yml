@@ -53,6 +53,19 @@ permissions:
   contents: read
 
 jobs:
+
+  security-scan:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Snyk IaC scan
+        uses: snyk/actions/iac@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+      - name: Save scan results
+        run: echo "Snyk scan completed"
   terraform:
     name: 'Terraform'
     env:
