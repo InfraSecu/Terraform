@@ -126,6 +126,19 @@ jobs:
         run: |
           echo "Le déploiement a été bloqué car Snyk a détecté des vulnérabilités."
           echo "Veuillez consulter les résultats de l'analyse pour plus de détails."
+      - name: Send Email Notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+            server_address: smtp.office365.com
+            server_port: 587
+            secure: true
+            username: ${{ secrets.EMAIL_USERNAME }}
+            password: ${{ secrets.EMAIL_PASSWORD }}
+            subject: "⚠️ [GitHub Actions] Vulnérabilités détectées dans l'Infrastructure"
+            html_body: file://./report/email-report.html
+            to: ${{ github.event.pusher.email }}  # Utilise l'email de l'utilisateur qui a déclenché le workflow
+            from: GitHub Actions <notifications@votreentreprise.com>
+            attachments: ./report/snyk-results.json
           
       # Vous pourriez ajouter ici des actions pour envoyer des notifications (Slack, email, etc.)
       # - name: Send Slack notification
@@ -135,4 +148,6 @@ jobs:
       #     channel-id: "C123456"
       #   env:
       #     SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+
 
