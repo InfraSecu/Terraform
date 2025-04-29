@@ -5,7 +5,7 @@ provider "azurerm" {
 
 resource "azurerm_resource_group" "example" {
   name     = "example-resources"
-  location = "West Europe"
+  location = "East US"
   tags = {
     environment = "demo"
   }
